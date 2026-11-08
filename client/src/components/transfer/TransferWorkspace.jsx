@@ -310,30 +310,33 @@ export function TransferWorkspace() {
           )}
 
           {/* STAGE 4: ACTIVE WEBRTC TRANSFER IN PROGRESS */}
-          {isConnectingOrTransferring && (
-            <motion.div
-              key="transferring-stage"
-              initial={{ opacity: 0, scale: 0.96 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.96 }}
-              transition={{ duration: 0.3 }}
-            >
-              <TransferProgressCard
-                role={role}
-                transferredBytes={transferredBytes}
-                totalBytes={totalBytes}
-                currentSpeed={currentSpeed}
-                estimatedSecondsRemaining={estimatedSecondsRemaining}
-                currentFileName={currentFileName}
-                currentFileBytes={currentFileBytes}
-                currentFileTotalBytes={currentFileTotalBytes}
-                currentFileIndex={currentFileIndex}
-                totalFiles={role === 'sender' ? selectedFiles.length : incomingFilesMeta.length}
-                fileProgress={fileProgress}
-                onCancel={cancelTransfer}
-              />
-            </motion.div>
-          )}
+          {isConnectingOrTransferring && (() => {
+            const effectiveRole = role || (selectedFiles.length > 0 ? 'sender' : (incomingFilesMeta.length > 0 ? 'receiver' : 'sender'));
+            return (
+              <motion.div
+                key="transferring-stage"
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.96 }}
+                transition={{ duration: 0.3 }}
+              >
+                <TransferProgressCard
+                  role={effectiveRole}
+                  transferredBytes={transferredBytes}
+                  totalBytes={totalBytes}
+                  currentSpeed={currentSpeed}
+                  estimatedSecondsRemaining={estimatedSecondsRemaining}
+                  currentFileName={currentFileName}
+                  currentFileBytes={currentFileBytes}
+                  currentFileTotalBytes={currentFileTotalBytes}
+                  currentFileIndex={currentFileIndex}
+                  totalFiles={effectiveRole === 'sender' ? (selectedFiles.length || 1) : (incomingFilesMeta.length || 1)}
+                  fileProgress={fileProgress}
+                  onCancel={cancelTransfer}
+                />
+              </motion.div>
+            );
+          })()}
 
           {/* STAGE 5: TRANSFER SUCCESS VIEW */}
           {isCompleted && (

@@ -101,6 +101,29 @@ async function testWebRTCEngineLogic() {
   receiverEngine.handleControlMessage({ type: 'transfer_cancel', reason: 'Peer aborted' });
   assert(cancelCalled && receiverEngine.isCancelled, 'Cancellation control message properly handled');
 
+  // TEST 4: ICE Candidate buffering queue
+  const queueTestEngine = new WebRTCEngine({});
+  const mockCandidate1 = { candidate: 'candidate:1 1 UDP 2122260223 192.168.1.100 50000 typ host', sdpMid: '0' };
+  const mockCandidate2 = { candidate: 'candidate:2 1 UDP 1686052607 203.0.113.1 50001 typ srflx', sdpMid: '0' };
+
+  await queueTestEngine.addIceCandidate(mockCandidate1);
+  await queueTestEngine.addIceCandidate(mockCandidate2);
+  assert(queueTestEngine.pendingCandidates.length === 2, 'Pending candidates safely queued when remoteDescription is not ready');
+
+  // Mock remote description and verify candidate draining
+  let drainedCount = 0;
+  queueTestEngine.peerConnection = {
+    remoteDescription: { type: 'offer' },
+    addIceCandidate: async (c) => {
+      drainedCount++;
+      return Promise.resolve();
+    }
+  };
+
+  await queueTestEngine.drainPendingCandidates();
+  assert(drainedCount === 2, 'Drained both buffered ICE candidates into peerConnection');
+  assert(queueTestEngine.pendingCandidates.length === 0, 'Pending candidates queue is empty after draining');
+
   console.log(`\n================================`);
   console.log(`WebRTC Engine Tests: ${passed} PASSED, ${failed} FAILED`);
   console.log(`================================\n`);

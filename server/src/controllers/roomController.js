@@ -21,7 +21,8 @@ export const roomController = {
   getIceServers(req, res) {
     res.json({
       status: 'success',
-      iceServers: config.iceServers
+      iceServers: config.iceServers,
+      turnConfigured: !!process.env.TURN_SERVER_URL
     });
   },
 

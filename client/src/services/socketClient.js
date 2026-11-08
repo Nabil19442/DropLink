@@ -7,7 +7,10 @@ class SocketClient {
   }
 
   connect() {
-    if (this.socket && this.socket.connected) {
+    if (this.socket) {
+      if (this.socket.disconnected) {
+        this.socket.connect();
+      }
       return this.socket;
     }
 

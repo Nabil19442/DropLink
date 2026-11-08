@@ -39,7 +39,7 @@ export function TransferProgressCard({
     ? Math.min(100, Math.round((currentFileBytes / currentFileTotalBytes) * 100))
     : 0;
 
-  const isSender = role === 'sender';
+  const isSender = role === 'sender' || (role !== 'receiver' && totalFiles > 0);
 
   // Compute SVG sparkline path
   const maxSpeed = Math.max(...speedHistory, 1024 * 500); // at least 500 KB/s scale

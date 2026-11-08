@@ -48,17 +48,21 @@ export const useTransferStore = create((set, get) => ({
     );
     const combined = [...existing, ...toAdd];
     const totalSize = combined.reduce((acc, f) => acc + f.size, 0);
-    set({ selectedFiles: combined, totalBytes: totalSize });
+    set({ selectedFiles: combined, totalBytes: totalSize, role: 'sender' });
   },
 
   removeFile: (fileName) => {
     const updated = get().selectedFiles.filter(f => f.name !== fileName);
     const totalSize = updated.reduce((acc, f) => acc + f.size, 0);
-    set({ selectedFiles: updated, totalBytes: totalSize });
+    set({
+      selectedFiles: updated,
+      totalBytes: totalSize,
+      role: updated.length > 0 ? 'sender' : null
+    });
   },
 
   clearFiles: () => {
-    set({ selectedFiles: [], totalBytes: 0 });
+    set({ selectedFiles: [], totalBytes: 0, role: null });
   },
 
   setIncomingFiles: (files, totalBytes) => {
