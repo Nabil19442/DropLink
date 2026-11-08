@@ -29,11 +29,12 @@ app.use(helmet({
 // CORS Configuration for Production (Vercel & custom domains)
 app.use(cors({
   origin: (origin, callback) => {
-    if (isOriginAllowed(origin)) {
+    const allowed = isOriginAllowed(origin);
+    if (allowed) {
       return callback(null, true);
     }
     logger.warn(`Blocked HTTP request from disallowed origin: ${origin}`);
-    return callback(new Error(`CORS origin not allowed: ${origin}`));
+    return callback(null, false);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
@@ -65,11 +66,12 @@ app.use(errorHandler);
 const io = new Server(server, {
   cors: {
     origin: (origin, callback) => {
-      if (isOriginAllowed(origin)) {
+      const allowed = isOriginAllowed(origin);
+      if (allowed) {
         return callback(null, true);
       }
       logger.warn(`Blocked Socket.IO connection from disallowed origin: ${origin}`);
-      return callback(new Error('Origin not allowed by CORS'));
+      return callback(null, false);
     },
     methods: ['GET', 'POST'],
     credentials: true
