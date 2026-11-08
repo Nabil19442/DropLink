@@ -159,3 +159,4 @@ You can verify your TURN server configuration using the official WebRTC ICE Gath
    - TURN password: `YOUR_STRONG_PASSWORD`
 3. Click **Add Server** and then **Gather candidates**.
 4. If configured properly, you will see candidates with `typ relay` appearing in the list.
+

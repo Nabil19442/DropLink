@@ -99,3 +99,4 @@ export function Navbar({ onStartSharing }) {
     </header>
   );
 }
+

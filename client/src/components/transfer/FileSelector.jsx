@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Upload, Plus, FolderUp, File, ShieldAlert } from 'lucide-react';
 import { Button } from '../ui/Button.jsx';
 import { formatBytes } from '../../utils/formatters.js';
+import { sounds } from '../../utils/soundEffects.js';
 
 export function FileSelector({ onFilesSelected, disabled = false }) {
   const [isDragOver, setIsDragOver] = useState(false);
@@ -110,3 +111,4 @@ export function FileSelector({ onFilesSelected, disabled = false }) {
     </div>
   );
 }
+

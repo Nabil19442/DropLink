@@ -112,3 +112,4 @@ export function ConnectionStatusBadge({ status, role, peerDevice }) {
     </Badge>
   );
 }
+

@@ -23,3 +23,4 @@ export const createRoomLimiter = rateLimit({
     error: 'Too many rooms created from this IP. Please wait a moment.'
   }
 });
+

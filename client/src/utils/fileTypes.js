@@ -79,3 +79,4 @@ export function getCategoryBadgeStyle(category) {
       return { bg: 'bg-slate-500/10', border: 'border-slate-500/30', text: 'text-slate-400' };
   }
 }
+

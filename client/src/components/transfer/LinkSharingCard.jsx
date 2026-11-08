@@ -3,6 +3,7 @@ import QRCode from 'qrcode';
 import { Copy, Check, Share2, QrCode, Clock, Wifi, RefreshCw, ExternalLink } from 'lucide-react';
 import { Button } from '../ui/Button.jsx';
 import { GlassCard } from '../ui/GlassCard.jsx';
+import { sounds } from '../../utils/soundEffects.js';
 
 export function LinkSharingCard({
   roomId,
@@ -60,6 +61,7 @@ export function LinkSharingCard({
 
   const handleCopy = async () => {
     try {
+      sounds.click();
       await navigator.clipboard.writeText(roomUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
@@ -185,3 +187,4 @@ export function LinkSharingCard({
     </GlassCard>
   );
 }
+

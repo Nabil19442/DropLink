@@ -58,3 +58,4 @@ export function isValidIceCandidate(candidate) {
   if (!candidate || typeof candidate !== 'object') return false;
   return typeof candidate.candidate === 'string' || candidate.candidate === '';
 }
+

@@ -95,3 +95,4 @@ export function Hero({ onStartSharing, onSeeHowItWorks }) {
     </section>
   );
 }
+

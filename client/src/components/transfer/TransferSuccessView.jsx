@@ -1,11 +1,13 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import confetti from 'canvas-confetti';
+import JSZip from 'jszip';
 import { motion } from 'framer-motion';
-import { CheckCircle2, Download, RefreshCw, FileText, ArrowRight, Sparkles } from 'lucide-react';
+import { CheckCircle2, Download, RefreshCw, FileText, Sparkles, Archive, Loader2 } from 'lucide-react';
 import { Button } from '../ui/Button.jsx';
 import { GlassCard } from '../ui/GlassCard.jsx';
 import { formatBytes, truncateFileName } from '../../utils/formatters.js';
 import { getFileCategory, getCategoryBadgeStyle } from '../../utils/fileTypes.js';
+import { sounds } from '../../utils/soundEffects.js';
 
 export function TransferSuccessView({
   role = 'receiver',
@@ -16,13 +18,15 @@ export function TransferSuccessView({
   onReset
 }) {
   const isReceiver = role === 'receiver';
+  const [isZipping, setIsZipping] = useState(false);
 
   // Fire celebratory confetti on mount
   useEffect(() => {
     try {
+      sounds.success();
       confetti({
-        particleCount: 80,
-        spread: 70,
+        particleCount: 85,
+        spread: 75,
         origin: { y: 0.6 },
         colors: ['#8B5CF6', '#22D3EE', '#60A5FA', '#34D399']
       });
@@ -30,6 +34,35 @@ export function TransferSuccessView({
       console.warn('Confetti error', e);
     }
   }, []);
+
+  // Download all files as a single ZIP archive
+  const handleDownloadAsZip = async () => {
+    if (!files || files.length === 0) return;
+    setIsZipping(true);
+    try {
+      const zip = new JSZip();
+      for (const file of files) {
+        if (file.blob) {
+          zip.file(file.name, file.blob);
+        }
+      }
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(zipBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `DropLink_Batch_${new Date().toISOString().slice(0, 10)}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Failed to generate ZIP:', err);
+      // Fallback to sequential download
+      onDownloadAll();
+    } finally {
+      setIsZipping(false);
+    }
+  };
 
   return (
     <GlassCard variant="glow" className="w-full max-w-xl mx-auto p-6 sm:p-8 text-center">
@@ -103,11 +136,24 @@ export function TransferSuccessView({
           <Button
             variant="glow"
             size="md"
-            icon={Download}
-            onClick={onDownloadAll}
+            icon={isZipping ? Loader2 : Archive}
+            loading={isZipping}
+            onClick={handleDownloadAsZip}
             className="flex-1 sm:flex-none"
           >
-            Download All Files
+            Download ZIP Archive
+          </Button>
+        )}
+
+        {isReceiver && files.length === 1 && (
+          <Button
+            variant="glow"
+            size="md"
+            icon={Download}
+            onClick={() => onDownloadFile(files[0])}
+            className="flex-1 sm:flex-none"
+          >
+            Download File
           </Button>
         )}
 

@@ -41,3 +41,4 @@ export function truncateFileName(name, maxLength = 26) {
   }
   return `${name.slice(0, maxLength - 3)}...`;
 }
+

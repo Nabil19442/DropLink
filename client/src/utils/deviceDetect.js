@@ -39,3 +39,4 @@ export function getDeviceInfo() {
 
   return { type, os, browser, label };
 }
+
