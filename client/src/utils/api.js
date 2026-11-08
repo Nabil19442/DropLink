@@ -2,14 +2,22 @@
  * Production-ready Backend URL and API path resolution
  */
 
+// Canonical deployed Render signaling backend fallback
+const FALLBACK_PRODUCTION_BACKEND = 'https://droplink-gufq.onrender.com';
+
 export function getBackendUrl() {
   const envUrl = import.meta.env.VITE_SERVER_URL;
   if (envUrl && typeof envUrl === 'string' && envUrl.trim().length > 0) {
     return envUrl.trim().replace(/\/+$/, '');
   }
-  // In development, fallback to empty string to leverage the Vite proxy,
-  // or window.location.origin if in production self-hosted mode
-  return '';
+
+  // In local development, return empty string so Vite proxies /socket.io and /api to localhost:5000
+  if (import.meta.env.DEV) {
+    return '';
+  }
+
+  // In production (e.g. deployed on Vercel), fallback to the deployed Render backend
+  return FALLBACK_PRODUCTION_BACKEND;
 }
 
 export function getApiUrl(path) {
@@ -26,6 +34,5 @@ export function getAppBaseUrl() {
   if (typeof window !== 'undefined' && window.location.origin) {
     return window.location.origin;
   }
-  return '';
+  return 'https://droplink-sigma-ten.vercel.app';
 }
-

@@ -4,8 +4,9 @@ services:
     runtime: node
     plan: free
     region: oregon
-    buildCommand: npm install --prefix server
-    startCommand: cd server && npm start
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
     healthCheckPath: /api/health
     autoDeploy: true
     envVars:
@@ -14,7 +15,7 @@ services:
       - key: PORT
         value: 10000
       - key: CLIENT_ORIGIN
-        sync: false
+        value: "*"
       - key: ALLOW_VERCEL_PREVIEWS
         value: "true"
       - key: ROOM_TTL_MS
@@ -29,4 +30,3 @@ services:
         sync: false
       - key: TURN_CREDENTIAL
         sync: false
-

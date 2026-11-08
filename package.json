@@ -4,10 +4,12 @@
   "description": "DropLink - Peer-to-Peer Global File Transfer Platform",
   "private": true,
   "scripts": {
+    "start": "cd server && npm start",
     "server": "cd server && npm start",
     "client": "cd client && npm run dev",
     "dev": "concurrently -n \"SERVER,CLIENT\" -c \"magenta,cyan\" \"npm run server\" \"npm run client\"",
     "build": "cd client && npm run build",
+    "build:server": "cd server && npm install",
     "test": "npm run test --prefix server && npm run test --prefix client"
   },
   "devDependencies": {

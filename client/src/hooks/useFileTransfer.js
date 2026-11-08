@@ -140,6 +140,14 @@ export function useFileTransfer() {
       }
     });
 
+    // Handle connection errors gracefully
+    socket.on('connect_error', (err) => {
+      console.warn('[DropLink Socket] Connection error:', err.message);
+      if (store.status === 'creating' || store.status === 'connecting') {
+        store.setStatus('failed', 'Cannot connect to signaling server. If Render backend was idle, it may be waking up (please retry).');
+      }
+    });
+
     return () => {
       socket.off('receiver:joined');
       socket.off('transfer:incoming');
@@ -148,6 +156,7 @@ export function useFileTransfer() {
       socket.off('webrtc:answer');
       socket.off('webrtc:ice-candidate');
       socket.off('peer:disconnected');
+      socket.off('connect_error');
     };
   }, [store.roomId, store.selectedFiles]);
 
@@ -237,7 +246,24 @@ export function useFileTransfer() {
     const socket = socketRef.current || socketClient.connect();
     const deviceInfo = getDeviceInfo();
 
+    let responded = false;
+    const timeoutTimer = setTimeout(() => {
+      if (!responded) {
+        responded = true;
+        store.setStatus('failed', 'Signaling server took too long to respond. The Render free-tier backend may be waking up from sleep. Please retry in 10-15 seconds.');
+        store.addToast({
+          type: 'warning',
+          title: 'Signaling Server Delayed',
+          message: 'Backend instance is waking up from sleep. Please try again in 10 seconds.'
+        });
+      }
+    }, 12000);
+
     socket.emit('room:create', { deviceInfo }, (response) => {
+      if (responded) return;
+      responded = true;
+      clearTimeout(timeoutTimer);
+
       if (response && response.success) {
         const fullUrl = `${getAppBaseUrl()}/?room=${response.roomId}`;
         store.setRole('sender');
@@ -264,11 +290,24 @@ export function useFileTransfer() {
     const socket = socketRef.current || socketClient.connect();
     const deviceInfo = getDeviceInfo();
 
+    let responded = false;
+    const timeoutTimer = setTimeout(() => {
+      if (!responded) {
+        responded = true;
+        store.setStatus('failed', 'Signaling server took too long to connect. Please refresh to retry.');
+      }
+    }, 12000);
+
     socket.emit('room:join', { roomId, deviceInfo }, (response) => {
+      if (responded) return;
+      responded = true;
+      clearTimeout(timeoutTimer);
+
       if (response && response.success) {
+        const fullUrl = `${getAppBaseUrl()}/?room=${roomId}`;
         store.setRoom({
           roomId,
-          roomUrl: window.location.href,
+          roomUrl: fullUrl,
           expiresAt: null
         });
 
