@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Share2, AlertCircle, RefreshCw, Layers } from 'lucide-react';
+import { Sparkles, Share2, AlertCircle, RefreshCw, KeyRound, ArrowRight, UploadCloud, X } from 'lucide-react';
 import { useFileTransfer } from '../../hooks/useFileTransfer.js';
 import { FileSelector } from './FileSelector.jsx';
 import { FileList } from './FileList.jsx';
@@ -11,6 +11,7 @@ import { TransferProgressCard } from './TransferProgressCard.jsx';
 import { TransferSuccessView } from './TransferSuccessView.jsx';
 import { Button } from '../ui/Button.jsx';
 import { GlassCard } from '../ui/GlassCard.jsx';
+import { sounds } from '../../utils/soundEffects.js';
 
 export function TransferWorkspace() {
   const {
@@ -46,6 +47,10 @@ export function TransferWorkspace() {
     resetTransfer
   } = useFileTransfer();
 
+  const [inputCode, setInputCode] = useState('');
+  const [showCodeInput, setShowCodeInput] = useState(false);
+  const [isWindowDragging, setIsWindowDragging] = useState(false);
+
   // Check URL query parameters for room link: e.g. /?room=XYZ
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -54,6 +59,71 @@ export function TransferWorkspace() {
       joinRoom(roomParam);
     }
   }, [joinRoom, roomId, status]);
+
+  // Global window drag-and-drop overlay listener
+  useEffect(() => {
+    let dragCounter = 0;
+
+    const handleWindowDragEnter = (e) => {
+      e.preventDefault();
+      dragCounter++;
+      if (e.dataTransfer.types && e.dataTransfer.types.includes('Files')) {
+        setIsWindowDragging(true);
+      }
+    };
+
+    const handleWindowDragLeave = (e) => {
+      e.preventDefault();
+      dragCounter--;
+      if (dragCounter <= 0) {
+        setIsWindowDragging(false);
+        dragCounter = 0;
+      }
+    };
+
+    const handleWindowDragOver = (e) => {
+      e.preventDefault();
+    };
+
+    const handleWindowDrop = (e) => {
+      e.preventDefault();
+      dragCounter = 0;
+      setIsWindowDragging(false);
+
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        sounds.pop();
+        addFiles(e.dataTransfer.files);
+      }
+    };
+
+    window.addEventListener('dragenter', handleWindowDragEnter);
+    window.addEventListener('dragleave', handleWindowDragLeave);
+    window.addEventListener('dragover', handleWindowDragOver);
+    window.addEventListener('drop', handleWindowDrop);
+
+    return () => {
+      window.removeEventListener('dragenter', handleWindowDragEnter);
+      window.removeEventListener('dragleave', handleWindowDragLeave);
+      window.removeEventListener('dragover', handleWindowDragOver);
+      window.removeEventListener('drop', handleWindowDrop);
+    };
+  }, [addFiles]);
+
+  const handleJoinWithCode = (e) => {
+    e.preventDefault();
+    if (!inputCode.trim()) return;
+
+    let targetCode = inputCode.trim();
+    // Support pasting full URL like https://domain.com/?room=xyz
+    if (targetCode.includes('room=')) {
+      const match = targetCode.match(/room=([a-zA-Z0-9_-]+)/);
+      if (match && match[1]) targetCode = match[1];
+    } else if (targetCode.includes('/')) {
+      targetCode = targetCode.split('/').pop();
+    }
+
+    joinRoom(targetCode);
+  };
 
   // Determine current high-level stage
   const isSelectingFiles = status === 'idle' || (status === 'creating' && !roomId);
@@ -65,6 +135,28 @@ export function TransferWorkspace() {
 
   return (
     <section id="transfer-workspace" className="py-16 sm:py-24 relative px-4 sm:px-6 lg:px-8">
+      {/* Global Fullscreen Drag Overlay */}
+      <AnimatePresence>
+        {isWindowDragging && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-[#080B18]/90 backdrop-blur-xl border-4 border-dashed border-cyan flex flex-col items-center justify-center p-6 text-center select-none"
+          >
+            <div className="w-24 h-24 rounded-3xl bg-gradient-to-tr from-accent to-cyan flex items-center justify-center text-white shadow-glow-cyan mb-6 animate-bounce">
+              <UploadCloud className="w-12 h-12" />
+            </div>
+            <h2 className="font-display text-3xl sm:text-4xl font-bold text-white mb-2">
+              Drop Files Anywhere to Share
+            </h2>
+            <p className="text-slate-300 max-w-md text-sm">
+              Release to instantly add files to your sovereign peer-to-peer transfer workspace.
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="max-w-4xl mx-auto">
         
         {/* Workspace Title & Dynamic Badge */}
@@ -91,7 +183,7 @@ export function TransferWorkspace() {
         {/* Dynamic Transition States */}
         <AnimatePresence mode="wait">
 
-          {/* STAGE 1: FILE SELECTION (SENDER) */}
+          {/* STAGE 1: FILE SELECTION (SENDER) & CODE JOIN */}
           {isSelectingFiles && (
             <motion.div
               key="file-select-stage"
@@ -103,7 +195,10 @@ export function TransferWorkspace() {
             >
               <GlassCard variant="default" className="p-6 sm:p-8">
                 <FileSelector
-                  onFilesSelected={addFiles}
+                  onFilesSelected={(files) => {
+                    sounds.pop();
+                    addFiles(files);
+                  }}
                   disabled={status === 'creating'}
                 />
 
@@ -114,7 +209,7 @@ export function TransferWorkspace() {
                   disabled={status === 'creating'}
                 />
 
-                {selectedFiles.length > 0 && (
+                {selectedFiles.length > 0 ? (
                   <div className="mt-8 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div className="text-xs text-slate-400 flex items-center gap-2">
                       <Sparkles className="w-4 h-4 text-cyan" />
@@ -132,7 +227,54 @@ export function TransferWorkspace() {
                       Generate Transfer Link
                     </Button>
                   </div>
+                ) : (
+                  /* Quick Join Section when no files selected */
+                  <div className="mt-6 pt-5 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
+                    <span>Receiving files from another device?</span>
+                    <button
+                      onClick={() => setShowCodeInput(!showCodeInput)}
+                      className="text-cyan hover:text-white flex items-center gap-1.5 font-medium transition-colors"
+                    >
+                      <KeyRound className="w-3.5 h-3.5" />
+                      <span>{showCodeInput ? 'Hide Code Input' : 'Join with Room Code / URL'}</span>
+                    </button>
+                  </div>
                 )}
+
+                {/* Optional Room Code Input */}
+                <AnimatePresence>
+                  {showCodeInput && selectedFiles.length === 0 && (
+                    <motion.form
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      onSubmit={handleJoinWithCode}
+                      className="mt-4 pt-4 border-t border-white/5 overflow-hidden"
+                    >
+                      <label className="block text-xs font-medium text-slate-300 mb-2">
+                        Enter 8-character Room Code or Transfer Link:
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={inputCode}
+                          onChange={(e) => setInputCode(e.target.value)}
+                          placeholder="e.g. FSG_Sgk2 or https://droplink.app/?room=FSG_Sgk2"
+                          className="flex-1 bg-surface-muted text-xs sm:text-sm text-white px-3.5 py-2.5 rounded-xl border border-surface-border focus:border-cyan focus:outline-none font-mono"
+                        />
+                        <Button
+                          variant="glow"
+                          size="md"
+                          icon={ArrowRight}
+                          type="submit"
+                          disabled={!inputCode.trim()}
+                        >
+                          Join
+                        </Button>
+                      </div>
+                    </motion.form>
+                  )}
+                </AnimatePresence>
               </GlassCard>
             </motion.div>
           )}
@@ -254,4 +396,3 @@ export function TransferWorkspace() {
     </section>
   );
 }
-

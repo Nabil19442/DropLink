@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Zap, Clock, HardDrive, X, ArrowUpRight, ArrowDownLeft, FileText } from 'lucide-react';
+import { Zap, Clock, HardDrive, X, ArrowUpRight, ArrowDownLeft, FileText, Activity } from 'lucide-react';
 import { Button } from '../ui/Button.jsx';
 import { GlassCard } from '../ui/GlassCard.jsx';
 import { formatBytes, formatSpeed, formatDuration, truncateFileName } from '../../utils/formatters.js';
@@ -19,6 +19,18 @@ export function TransferProgressCard({
   fileProgress = {},
   onCancel
 }) {
+  const [speedHistory, setSpeedHistory] = useState([0, 0, 0, 0, 0]);
+
+  // Track speed samples over time for real-time SVG sparkline
+  useEffect(() => {
+    if (currentSpeed > 0) {
+      setSpeedHistory(prev => {
+        const next = [...prev.slice(-19), currentSpeed];
+        return next;
+      });
+    }
+  }, [currentSpeed]);
+
   const overallPercent = totalBytes > 0
     ? Math.min(100, Math.round((transferredBytes / totalBytes) * 100))
     : 0;
@@ -28,6 +40,16 @@ export function TransferProgressCard({
     : 0;
 
   const isSender = role === 'sender';
+
+  // Compute SVG sparkline path
+  const maxSpeed = Math.max(...speedHistory, 1024 * 500); // at least 500 KB/s scale
+  const points = speedHistory.map((val, idx) => {
+    const x = (idx / (speedHistory.length - 1 || 1)) * 100;
+    const y = 35 - (val / maxSpeed) * 30;
+    return `${x},${Math.max(4, Math.min(35, y))}`;
+  }).join(' ');
+
+  const areaPoints = `0,35 ${points} 100,35`;
 
   return (
     <GlassCard variant="glow" className="w-full max-w-xl mx-auto p-6 sm:p-8">
@@ -132,6 +154,35 @@ export function TransferProgressCard({
         </div>
       </div>
 
+      {/* Real-time SVG Bandwidth Sparkline */}
+      <div className="mb-6 p-3 rounded-xl bg-[#090C1A] border border-white/5">
+        <div className="flex items-center justify-between text-[10px] text-slate-400 mb-2">
+          <span className="flex items-center gap-1.5 text-cyan font-medium">
+            <Activity className="w-3.5 h-3.5" /> Live Throughput Graph
+          </span>
+          <span className="font-mono">Peak: {formatSpeed(maxSpeed)}</span>
+        </div>
+        <div className="w-full h-10 relative overflow-hidden">
+          <svg className="w-full h-full overflow-visible" viewBox="0 0 100 35" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="speedArea" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#22D3EE" stopOpacity="0.4" />
+                <stop offset="100%" stopColor="#22D3EE" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            <polygon points={areaPoints} fill="url(#speedArea)" />
+            <polyline
+              points={points}
+              fill="none"
+              stroke="#22D3EE"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </div>
+      </div>
+
       {/* Current File Sub-Progress */}
       {currentFileName && (
         <div className="p-3.5 rounded-xl bg-[#090C1B] border border-white/5">
@@ -158,4 +209,3 @@ export function TransferProgressCard({
     </GlassCard>
   );
 }
-

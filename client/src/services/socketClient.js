@@ -1,4 +1,5 @@
 import { io } from 'socket.io-client';
+import { getBackendUrl } from '../utils/api.js';
 
 class SocketClient {
   constructor() {
@@ -10,13 +11,14 @@ class SocketClient {
       return this.socket;
     }
 
-    const serverUrl = import.meta.env.VITE_SERVER_URL || window.location.origin;
+    const serverUrl = getBackendUrl() || (typeof window !== 'undefined' ? window.location.origin : '');
 
     this.socket = io(serverUrl, {
       transports: ['websocket', 'polling'],
       reconnection: true,
-      reconnectionAttempts: 5,
+      reconnectionAttempts: 10,
       reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
       autoConnect: true,
     });
 
@@ -39,4 +41,3 @@ class SocketClient {
 }
 
 export const socketClient = new SocketClient();
-

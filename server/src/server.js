@@ -6,7 +6,7 @@ import helmet from 'helmet';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
-import { config } from './config/index.js';
+import { config, isOriginAllowed } from './config/index.js';
 import { logger } from './utils/logger.js';
 import { apiLimiter } from './middleware/rateLimiter.js';
 import { errorHandler } from './middleware/errorHandler.js';
@@ -26,22 +26,14 @@ app.use(helmet({
   contentSecurityPolicy: false, // In development/hybrid Vite setup
 }));
 
-// CORS Configuration
-const allowedOrigins = [
-  config.clientOrigin,
-  'http://localhost:5173',
-  'http://127.0.0.1:5173',
-  'http://localhost:4173',
-  'http://localhost:3000'
-];
-
+// CORS Configuration for Production (Vercel & custom domains)
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, curl, etc.)
-    if (!origin || allowedOrigins.includes(origin) || origin.startsWith('http://localhost:') || origin.startsWith('http://192.168.')) {
+    if (isOriginAllowed(origin)) {
       return callback(null, true);
     }
-    return callback(null, true); // Permissive for local network testing (phone to laptop)
+    logger.warn(`Blocked HTTP request from disallowed origin: ${origin}`);
+    return callback(new Error(`CORS origin not allowed: ${origin}`));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
@@ -69,12 +61,18 @@ if (fs.existsSync(clientDistPath)) {
 // Error handling middleware
 app.use(errorHandler);
 
-// Socket.IO Setup
+// Socket.IO Setup with Production CORS
 const io = new Server(server, {
   cors: {
-    origin: '*',
+    origin: (origin, callback) => {
+      if (isOriginAllowed(origin)) {
+        return callback(null, true);
+      }
+      logger.warn(`Blocked Socket.IO connection from disallowed origin: ${origin}`);
+      return callback(new Error('Origin not allowed by CORS'));
+    },
     methods: ['GET', 'POST'],
-    credentials: false
+    credentials: true
   },
   pingTimeout: 30000,
   pingInterval: 15000,

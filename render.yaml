@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: droplink-signaling
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: npm install --prefix server
+    startCommand: cd server && npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: CLIENT_ORIGIN
+        sync: false
+      - key: ALLOW_VERCEL_PREVIEWS
+        value: "true"
+      - key: ROOM_TTL_MS
+        value: "1800000"
+      - key: MAX_FILES_PER_TRANSFER
+        value: "50"
+      - key: MAX_TOTAL_SIZE_BYTES
+        value: "5368709120"
+      - key: TURN_SERVER_URL
+        sync: false
+      - key: TURN_USERNAME
+        sync: false
+      - key: TURN_CREDENTIAL
+        sync: false

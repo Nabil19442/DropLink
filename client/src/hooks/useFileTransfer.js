@@ -3,6 +3,7 @@ import { socketClient } from '../services/socketClient.js';
 import { WebRTCEngine } from '../services/webrtcEngine.js';
 import { useTransferStore } from '../store/transferStore.js';
 import { getDeviceInfo } from '../utils/deviceDetect.js';
+import { getApiUrl, getAppBaseUrl } from '../utils/api.js';
 
 export function useFileTransfer() {
   const store = useTransferStore();
@@ -14,8 +15,11 @@ export function useFileTransfer() {
 
   // Fetch ICE server config from backend
   useEffect(() => {
-    fetch('/api/config/ice')
-      .then(res => res.json())
+    fetch(getApiUrl('/api/config/ice'))
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
       .then(data => {
         if (data.iceServers && data.iceServers.length > 0) {
           iceServersRef.current = data.iceServers;
@@ -235,7 +239,7 @@ export function useFileTransfer() {
 
     socket.emit('room:create', { deviceInfo }, (response) => {
       if (response && response.success) {
-        const fullUrl = `${window.location.origin}/?room=${response.roomId}`;
+        const fullUrl = `${getAppBaseUrl()}/?room=${response.roomId}`;
         store.setRole('sender');
         store.setRoom({
           roomId: response.roomId,
