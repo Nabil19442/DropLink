@@ -4,9 +4,10 @@
  */
 
 let audioCtx = null;
+let muted = typeof window !== 'undefined' && localStorage.getItem('droplink_muted') === 'true';
 
 function getAudioContext() {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === 'undefined' || muted) return null;
   if (!audioCtx) {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     if (AudioContext) {
@@ -20,8 +21,23 @@ function getAudioContext() {
 }
 
 export const sounds = {
+  isMuted: () => muted,
+
+  setMuted: (val) => {
+    muted = Boolean(val);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('droplink_muted', String(muted));
+    }
+  },
+
+  toggleMute: () => {
+    sounds.setMuted(!muted);
+    return muted;
+  },
+
   // Soft bubble pop when files are dropped or added
   pop: () => {
+    if (muted) return;
     try {
       const ctx = getAudioContext();
       if (!ctx) return;
@@ -43,6 +59,7 @@ export const sounds = {
 
   // Subtle click when copying link
   click: () => {
+    if (muted) return;
     try {
       const ctx = getAudioContext();
       if (!ctx) return;
@@ -64,6 +81,7 @@ export const sounds = {
 
   // Ascending chime when receiver connects
   connected: () => {
+    if (muted) return;
     try {
       const ctx = getAudioContext();
       if (!ctx) return;
@@ -87,6 +105,7 @@ export const sounds = {
 
   // Celebratory major chord fanfare on completion
   success: () => {
+    if (muted) return;
     try {
       const ctx = getAudioContext();
       if (!ctx) return;
@@ -109,4 +128,3 @@ export const sounds = {
     } catch (e) { /* ignore */ }
   }
 };
-

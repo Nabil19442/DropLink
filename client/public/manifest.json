@@ -1,0 +1,20 @@
+{
+  "name": "DropLink — Peer-to-Peer File Transfer",
+  "short_name": "DropLink",
+  "description": "Direct, encrypted, peer-to-peer file transfer between any devices worldwide. No accounts, no cloud storage, no file limits.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#080B18",
+  "theme_color": "#080B18",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["utilities", "productivity", "networking"]
+}
+

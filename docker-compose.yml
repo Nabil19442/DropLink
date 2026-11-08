@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  droplink:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: droplink-app
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - CLIENT_ORIGIN=*
+      - ALLOW_VERCEL_PREVIEWS=true
+      - ROOM_TTL_MS=1800000
+      - MAX_FILES_PER_TRANSFER=50
+      - MAX_TOTAL_SIZE_BYTES=5368709120
+      # Optional TURN server relay credentials
+      # - TURN_SERVER_URL=turn:YOUR_VPS_IP:3478?transport=udp
+      # - TURN_USERNAME=droplink_user
+      # - TURN_CREDENTIAL=your_secure_password
+
+  # Optional Embedded Coturn TURN Relay for Self-Hosters
+  # coturn:
+  #   image: coturn/coturn:latest
+  #   container_name: droplink-coturn
+  #   restart: unless-stopped
+  #   network_mode: "host"
+  #   command:
+  #     - -n
+  #     - --log-file=stdout
+  #     - --listening-port=3478
+  #     - --tls-listening-port=5349
+  #     - --min-port=49152
+  #     - --max-port=65535
+  #     - --realm=turn.local
+  #     - --lt-cred-mech
+  #     - --user=droplink_user:your_secure_password
+

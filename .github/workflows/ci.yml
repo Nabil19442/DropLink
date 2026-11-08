@@ -1,0 +1,39 @@
+name: DropLink CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-and-build:
+    name: Test and Build
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20.x, 22.x]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install Workspace Dependencies
+        run: |
+          npm install
+          cd server && npm install && cd ..
+          cd client && npm install && cd ..
+
+      - name: Run Full Test Suite (Server E2E + WebRTC Engine)
+        run: npm test
+
+      - name: Build Frontend Production Bundle
+        run: npm run build
+

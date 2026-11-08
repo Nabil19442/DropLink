@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowUpRight, Zap, Shield, Sparkles } from 'lucide-react';
+import { ArrowUpRight, Zap, Shield, Sparkles, Volume2, VolumeX } from 'lucide-react';
 import { Button } from '../ui/Button.jsx';
+import { sounds } from '../../utils/soundEffects.js';
 
 export function Navbar({ onStartSharing }) {
   const [scrolled, setScrolled] = useState(false);
+  const [isMuted, setIsMuted] = useState(sounds.isMuted());
 
   useEffect(() => {
     const handleScroll = () => {
@@ -12,6 +14,14 @@ export function Navbar({ onStartSharing }) {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const handleToggleMute = () => {
+    const next = sounds.toggleMute();
+    setIsMuted(next);
+    if (!next) {
+      sounds.pop();
+    }
+  };
 
   return (
     <header
@@ -78,8 +88,18 @@ export function Navbar({ onStartSharing }) {
           </a>
         </nav>
 
-        {/* Action Button */}
+        {/* Action Button & Controls */}
         <div className="flex items-center gap-3">
+          {/* Sound Toggle */}
+          <button
+            onClick={handleToggleMute}
+            className="p-2 rounded-xl bg-surface-muted/60 border border-white/10 text-slate-400 hover:text-white transition-colors"
+            title={isMuted ? 'Unmute sound effects' : 'Mute sound effects'}
+            aria-label="Toggle sound"
+          >
+            {isMuted ? <VolumeX className="w-4 h-4 text-slate-500" /> : <Volume2 className="w-4 h-4 text-cyan" />}
+          </button>
+
           <div className="hidden sm:flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             Signaling Live
@@ -99,4 +119,3 @@ export function Navbar({ onStartSharing }) {
     </header>
   );
 }
-

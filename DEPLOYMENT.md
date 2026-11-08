@@ -211,3 +211,4 @@ The backend will automatically provide these credentials to authenticated peers 
 - **Symptom**: Browser console shows `Access to fetch has been blocked by CORS policy`.
 - **Cause**: The `CLIENT_ORIGIN` variable on Render does not match your Vercel URL.
 - **Fix**: Update `CLIENT_ORIGIN` on Render to match your exact Vercel URL (e.g., `https://droplink.vercel.app`), without a trailing slash. If using custom domains, separate them with commas.
+
