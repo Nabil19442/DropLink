@@ -1,0 +1,16 @@
+{
+  "name": "droplink-workspace",
+  "version": "1.0.0",
+  "description": "DropLink - Peer-to-Peer Global File Transfer Platform",
+  "private": true,
+  "scripts": {
+    "server": "cd server && npm start",
+    "client": "cd client && npm run dev",
+    "dev": "concurrently -n \"SERVER,CLIENT\" -c \"magenta,cyan\" \"npm run server\" \"npm run client\"",
+    "build": "cd client && npm run build",
+    "test": "npm run test --prefix server && npm run test --prefix client"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
